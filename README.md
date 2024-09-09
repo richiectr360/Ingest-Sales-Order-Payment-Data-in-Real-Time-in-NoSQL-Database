@@ -1,4 +1,4 @@
-# Data Engineering Project: Cassandra and Google Pub/Sub Integration
+# Data Engineering Project: Ingest Sales Order & Payment Data in Real Time in NoSQL Database
 
 This project demonstrates how to integrate Apache Cassandra with Google Pub/Sub for processing e-commerce order and payment data. It involves consuming mock order and payment data from Pub/Sub topics, ingesting them into a Cassandra database, and handling failures by sending problematic data to a Dead Letter Queue (DLQ).
 
@@ -113,6 +113,7 @@ CREATE TABLE ecom_store.orders_payments_facts (
     payment_status TEXT,
     payment_datetime TEXT
 );
+```
 
 
 ## Running the Application
@@ -152,3 +153,98 @@ python3 ingest_in_fact_table.py
 ### Order and Payment Data Producers
 The order_data_producer.py and payments_data_producer.py scripts simulate the production of order and payment data. These scripts publish mock data to the corresponding Pub/Sub topics.
 
+- Run the order data producer:
+
+```bash
+python3 order_data_producer.py
+```
+
+- Run the payment data producer:
+
+```bash
+python3 payments_data_producer.py
+```
+
+### Data Consumers
+
+The order_data_consumer.py and ingest_in_fact_table.py scripts consume messages from the Pub/Sub topics and ingest the data into Cassandra.
+
+- Run the order data consumer:
+
+```bash
+python3 order_data_consumer.py
+```
+
+- Run the payment data ingestion script:
+
+```bash
+python3 ingest_in_fact_table.py
+```
+
+## Python Dependencies
+
+Install the necessary Python dependencies using the following commands:
+
+```bash
+pip3 install google-cloud-pubsub
+pip3 install cassandra-driver
+```
+
+## Initial Setup and Requirements for Pub/Sub
+
+
+1. Google Cloud SDK: Make sure Google Cloud SDK is installed to access gcloud CLI commands.
+2. Pub/Sub Topics: Create Pub/Sub topics named as orders_data, payments_data, and dlq_payments_data with default subscribers.
+3. Authentication: Before publishing/consuming data in Pub/Sub, authenticate your Google Cloud account:
+
+```bash
+gcloud auth application-default login
+```
+
+4. Service Account: Create a service account with Pub/Sub producer and subscriber roles in Google Cloud IAM & Admin.
+5. Service Account Keys: Generate keys for the service account. Replace the content in:
+
+```bash
+/Users/your_username/.config/gcloud/application_default_credentials.json
+```
+
+## Docker Command to Start Cassandra
+
+To start the Cassandra service:
+
+```bash
+docker compose -f docker-compose-cassandra.yml up -d
+```
+
+Once the Cassandra container is running:
+
+1. Open the container terminal.
+2. Run cqlsh to open the Cassandra shell.
+
+## Cassandra Table Creation
+
+To create the keyspace and table in Cassandra, use the following commands in the cqlsh shell:
+
+```cql
+CREATE KEYSPACE IF NOT EXISTS ecom_store WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+
+CREATE TABLE ecom_store.orders_payments_facts (
+    order_id BIGINT PRIMARY KEY,
+    customer_id BIGINT,
+    item TEXT,
+    quantity BIGINT,
+    price DOUBLE,
+    shipping_address TEXT,
+    order_status TEXT,
+    creation_date TEXT,
+    payment_id BIGINT,
+    payment_method TEXT,
+    card_last_four TEXT,
+    payment_status TEXT,
+    payment_datetime TEXT
+);
+```
+
+## Conclusion
+
+This project demonstrates a simple data pipeline integrating Google Pub/Sub and Apache Cassandra. By following the setup instructions, you can simulate an e-commerce data pipeline that processes and stores order and payment data while handling failures via a Dead Letter Queue (DLQ). This setup provides a scalable, reliable solution for real-time data ingestion and error handling in distributed systems.
